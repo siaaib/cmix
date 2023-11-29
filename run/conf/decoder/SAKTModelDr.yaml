@@ -1,0 +1,8 @@
+name: SAKTModelDr
+params:
+  embed_dim: 128
+  nlayers: 3
+  rnnlayers: 2
+  nheads: 8
+  dropout: 0.5
+  downsample_rate: ${downsample_rate}

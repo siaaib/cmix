@@ -1,0 +1,5 @@
+data_dir: /home/siavash/random/new_drive/trials/data
+processed_dir: /home/siavash/random/new_drive/trials/processed_data
+output_dir: /home/siavash/random/new_drive/trials/output
+model_dir: /home/siavash/random/new_drive/trials/output/train
+sub_dir: ./

@@ -1,0 +1,8 @@
+name: UNet1DDecoderLSTM
+params:
+  bilinear: false
+  se: True
+  res: True
+  scale_factor: 2
+  dropout: 0.0
+  num_layers: 1

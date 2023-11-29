@@ -1,0 +1,6 @@
+name: SAKTModel
+params:
+  embed_dim: 128
+  nlayers: 3
+  nheads: 4
+  dropout: 0.25

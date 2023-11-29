@@ -1,0 +1,81 @@
+# ---------- Overriding hydra default configs ----------
+hydra:
+  job:
+    name: inference
+    chdir: true
+  run:
+    dir: ${dir.output_dir}/${hydra.job.name}/${exp_name}/single
+  sweep:
+    dir: ${dir.output_dir}/${hydra.job.name}/${exp_name}
+    subdir: run${hydra.job.num}
+
+defaults:
+  - _self_
+  - dataset: seg
+  - dir: SpecTr
+  - model: Spec2DCNN
+  - feature_extractor: LSTMFeatureExtractor
+  - decoder: SAKTModel
+
+exp_name: transformers5f
+phase: test
+n_folds: 5
+weight:
+model_path_list:
+  - "/kaggle/input/cmi-model-tr5/transformers5f/run0/best_model.pth"
+  - "/kaggle/input/cmi-model-tr5/transformers5f/run1/best_model.pth"
+  - "/kaggle/input/cmi-model-tr5/transformers5f/run1/best_model.pth"
+  - "/kaggle/input/cmi-model-tr5/transformers5f/run2/best_model.pth"
+  - "/kaggle/input/cmi-model-tr5/transformers5f/run2/best_model.pth"
+
+seed: 42
+duration: 17280 
+downsample_rate: 4
+upsample_rate: 1
+batch_size: 32
+num_workers: 2
+use_amp: true
+average_type: "mean"
+
+# augmentation
+augmentation:
+  mixup_prob: 0.0
+  mixup_alpha: 0.4
+  cutmix_prob: 0.0
+  cutmix_alpha: 0.4
+
+# augmentation
+aug:
+  mixup_prob: 0.0
+  mixup_alpha: 0.4
+  cutmix_prob: 0.0
+  cutmix_alpha: 0.4
+
+# post_process
+pp:
+  score_th: 0.02
+  distance: 10
+
+# label
+labels:
+  - "awake"
+  - "event_onset"
+  - "event_wakeup"
+
+# feature
+features:
+  - "minute"
+  - "anglez"
+  - "enmo"
+  - "hour_sin"
+  - "hour_cos"
+  - "anglez_sin"
+  - "anglez_cos"
+  - "anglez_diff_p1"
+  - "anglez_diff_p2"
+  - "anglez_diff_p3"
+  - "anglez_diff_p4"
+  - "enmo_diff_p1"
+  - "enmo_diff_p2"
+  - "enmo_diff_p3"
+  - "enmo_diff_p4"

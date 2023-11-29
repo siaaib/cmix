@@ -1,0 +1,18 @@
+name: WAVELSTMFeatureExtractor
+params:
+  hidden_size: 32
+  num_layers: 2
+  bidirectional: true
+  stride: ${downsample_rate}
+  rnn_type: 'lstm'
+  base_filters: 64
+  wave_layers:
+    - 12
+    - 8
+    - 4
+    - ${downsample_rate}
+  wave_block: complete
+  kernel_size: 3
+  downsample: ${downsample_rate}
+  sigmoid: false
+  reinit: true
