@@ -140,8 +140,8 @@ def main(cfg: InferenceConfig):
         sub_df = make_submission(
             keys,
             preds,
-            score_th=cfg.post_process.score_th,
-            distance=cfg.post_process.distance,
+            score_th=cfg.pp.score_th,
+            distance=cfg.pp.distance,
         )
     sub_df.write_csv(Path(cfg.dir.sub_dir) / "submission.csv")
 
