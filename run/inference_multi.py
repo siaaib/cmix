@@ -17,7 +17,7 @@ from src.utils.common import nearest_valid_size, trace
 from src.utils.post_process import post_process_for_seg
 
 
-def load_model(cfg: InferenceConfig, fold) -> BaseModel:
+def load_model(cfg: InferenceConfig, weight_path) -> BaseModel:
     num_timesteps = nearest_valid_size(int(cfg.duration * cfg.upsample_rate), cfg.downsample_rate)
     model = get_model(
         cfg,
@@ -26,16 +26,8 @@ def load_model(cfg: InferenceConfig, fold) -> BaseModel:
         num_timesteps=num_timesteps // cfg.downsample_rate,
     )
 
-    # load weights
-    if cfg.weight is not None:
-        weight_path = (
-            Path(cfg.dir.model_dir)
-            / cfg.weight["exp_name"]
-            / f"run{fold}"
-            / cfg.weight["file_name"]
-        )
-        model.load_state_dict(torch.load(weight_path))
-        print('load weight from "{}"'.format(weight_path))
+    model.load_state_dict(torch.load(weight_path))
+    print('load weight from "{}"'.format(weight_path))
     return model
 
 
@@ -48,7 +40,7 @@ def get_test_dataloader(cfg: InferenceConfig) -> DataLoader:
     Returns:
         DataLoader: test dataloader
     """
-    feature_dir = Path(cfg.dir.processed_dir) / cfg.phase
+    feature_dir = Path("/kaggle/working/processed_data/test")
     series_ids = [x.name for x in feature_dir.glob("*")]
     chunk_features = load_chunk_features(
         duration=cfg.duration,
@@ -128,13 +120,13 @@ def main(cfg: InferenceConfig):
         test_dataloader = get_test_dataloader(cfg)
     with trace("load model"):
         models = []
-        for fold in range(cfg.n_folds):
-            model = load_model(cfg, fold=fold)
+        for model_path in cfg.model_path_list:
+            model = load_model(cfg, model_path)
             models.append(model)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     with trace("inference"):
-        keys, preds = inference(cfg.duration, test_dataloader, models, device, use_amp=cfg.use_amp)
+        keys, preds = inference(cfg.duration, test_dataloader, models, device, use_amp=cfg.use_amp, average_type=cfg.average_type)
 
     with trace("make submission"):
         sub_df = make_submission(
