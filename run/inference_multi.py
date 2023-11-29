@@ -4,13 +4,11 @@ import hydra
 import numpy as np
 import polars as pl
 import torch
-import torch.nn as nn
-from src.conf import InferenceConfig
 from pytorch_lightning import seed_everything
 from torch.utils.data import DataLoader
-from torchvision.transforms.functional import resize
 from tqdm import tqdm
 
+from src.conf import InferenceConfig
 from src.datamodule import load_chunk_features
 from src.dataset.common import get_test_ds
 from src.models.base import BaseModel

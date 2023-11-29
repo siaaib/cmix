@@ -162,6 +162,7 @@ cython_debug/
 data/
 processed_data/
 output/
-dataset/
+datasets/
+scalers/
 .vscode/
 .venv/
