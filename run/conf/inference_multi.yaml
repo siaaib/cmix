@@ -12,8 +12,8 @@ hydra:
 defaults:
   - _self_
   - dataset: seg
-  - dir: SpecTr
-  - model: Spec2DCNN
+  - dir: local
+  - model: SpecTr
   - feature_extractor: LSTMFeatureExtractor
   - decoder: SAKTModel
 
