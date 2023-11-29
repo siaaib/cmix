@@ -7,7 +7,7 @@ import torch
 from pytorch_lightning import seed_everything
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-
+import torch.nn as nn
 from src.conf import InferenceConfig
 from src.datamodule import load_chunk_features
 from src.dataset.common import get_test_ds
@@ -84,9 +84,12 @@ def inference(
                 x = batch["feature"].to(device)
                 all_preds = []               
                 for model in models:
-                    preds = model(x)["logits"].sigmoid()
+                    output = model.predict(
+                    x,
+                    org_duration=duration,
+                    )
                     # Append the predictions to the list
-                    all_preds.append(preds)
+                    all_preds.append(output.preds)
 
                 all_preds = torch.stack(all_preds, dim=0)
                 if average_type == 'median':
@@ -95,11 +98,6 @@ def inference(
                     pred = torch.mean(all_preds, dim=0)
                 else:
                     pred = (torch.median(all_preds, dim=0)[0] + torch.mean(all_preds, dim=0))/2
-                pred = resize(
-                    pred.detach().cpu(),
-                    size=[duration, pred.shape[2]],
-                    antialias=False,
-                )
             key = batch["key"]
             preds.append(pred.detach().cpu().numpy())
             keys.extend(key)
