@@ -15,8 +15,7 @@ class LSTMFeatureExtractor(nn.Module):
         out_size: Optional[int] = None,
     ):
         super().__init__()
-        self.fc = nn.Linear(in_channels-1, hidden_size-8)
-        self.embed = nn.Embedding(15, 8)
+        self.fc = nn.Linear(in_channels, hidden_size)
         self.conv = nn.Conv1d(
             in_channels=hidden_size,
             out_channels=hidden_size,
@@ -55,9 +54,7 @@ class LSTMFeatureExtractor(nn.Module):
             torch.Tensor: (batch_size, out_chans, height, time_steps)
         """
         # x: (batch_size, in_channels, time_steps)
-        x_embed = self.embed(x[:, 0, :].long())  # x: (batch_size, time_steps, embed_size
-        x_linear = self.fc(x[:, 1:, :].transpose(1, 2))  # x: (batch_size, time_steps, hidden_size)
-        x = torch.cat([x_embed, x_linear], dim=2)
+        x = self.fc(x.transpose(1, 2))  # x: (batch_size, time_steps, hidden_size)
         x = self.conv(x.transpose(1, 2))  # x: (batch_size, hidden_size, time_steps)
         if self.out_size is not None:
             x = x.unsqueeze(1)  # x: (batch_size, 1, hidden_size, time_steps)

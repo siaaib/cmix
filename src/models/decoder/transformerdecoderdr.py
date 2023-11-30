@@ -3,50 +3,6 @@ from torch.nn import functional as F
 import torch
 import segmentation_models_pytorch as smp
 
-class ResidualLSTM(nn.Module):
-    def __init__(self, d_model):
-        super(ResidualLSTM, self).__init__()
-        self.LSTM = nn.LSTM(d_model, d_model, num_layers=1, bidirectional=True)
-        self.linear1 = nn.Linear(d_model * 2, d_model * 4)
-        self.linear2 = nn.Linear(d_model * 4, d_model)
-
-    def forward(self, x):
-        res = x
-        x, _ = self.LSTM(x)
-        x = F.relu(self.linear1(x))
-        x = self.linear2(x)
-        x = 0.5*x + 0.5*res
-        return x
-
-class NonResidualLSTM(nn.Module):
-    def __init__(self, d_model):
-        super(NonResidualLSTM, self).__init__()
-        self.LSTM = nn.LSTM(d_model, d_model, num_layers=1, bidirectional=True)
-        self.linear1 = nn.Linear(d_model * 2, d_model * 4)
-        self.linear2 = nn.Linear(d_model * 4, d_model)
-
-    def forward(self, x):
-        x, _ = self.LSTM(x)
-        x = F.relu(self.linear1(x))
-        x = self.linear2(x)
-        return x
-
-class ResidualGRU(nn.Module):
-    def __init__(self, d_model):
-        super(ResidualGRU, self).__init__()
-        self.GRU = nn.GRU(d_model, d_model, num_layers=1, bidirectional=True)
-        self.linear1 = nn.Linear(d_model * 2, d_model * 4)
-        self.linear2 = nn.Linear(d_model * 4, d_model)
-
-    def forward(self, x):
-        res = x
-        x, _ = self.GRU(x)
-        x = F.relu(self.linear1(x))
-        x = self.linear2(x)
-        x = 0.5*x + 0.5*res
-        return x
-
-
 class SAKTModelDr(nn.Module):
     def __init__(
         self,
@@ -63,22 +19,22 @@ class SAKTModelDr(nn.Module):
     ):
         super(SAKTModelDr, self).__init__()
 
-        self.resize = nn.Linear(nin, embed_dim//2)
+        self.fist_downsample = nn.Conv1d(embed_dim, embed_dim, downsample_rate, stride=downsample_rate)
+        self.resize = nn.Linear(nin, embed_dim)
         self.feature_extractor = feature_extractor
-        self.fist_downsample = nn.Conv1d(embed_dim//2, embed_dim//2, downsample_rate, stride=downsample_rate)
-        self.pos_encoder_1 = nn.ModuleList([ResidualLSTM(embed_dim//2) for _ in range(rnnlayers)])
+        self.pos_encoder_1 = nn.GRU(embed_dim, embed_dim//2, num_layers=rnnlayers, bidirectional=True)
         self.pos_encoder_dropout_1 = nn.Dropout(dropout)
         self.unet_dropout = nn.Dropout(dropout)
         self.unet_1 = smp.Unet(
-            encoder_name='resnet34',
+            encoder_name='mit_b0',
             encoder_weights='imagenet',
-            in_channels=4,
+            in_channels=3,
             classes=1,
         )
 
         self.layer_normal = nn.LayerNorm(embed_dim)
         encoder_layers = [
-            nn.TransformerEncoderLayer(embed_dim, nheads, embed_dim * 4, dropout)
+            nn.TransformerEncoderLayer(embed_dim, nheads, embed_dim * 4, dropout/2)
             for _ in range(nlayers)
         ]
         conv_layers = [
@@ -103,19 +59,28 @@ class SAKTModelDr(nn.Module):
     def forward(self, x):
         if self.feature_extractor is not None:
             x_conv_unet = self.feature_extractor(x)
+            #print(x_conv_unet[0].shape)
             x_conv_unet = torch.cat(x_conv_unet, dim=1)
+            #print(x_conv_unet.shape)
         x = self.resize(x.permute(0, 2, 1)).permute(0, 2, 1)
+        #print(x.shape)
         x = self.fist_downsample(x)
+        #print(x.shape)
         x = x.permute(2, 0, 1)
-        for lstm in self.pos_encoder_1:
-            lstm.LSTM.flatten_parameters()
-            x = lstm(x)
-        x_lstm = self.pos_encoder_dropout_1(x)
+        x_lstm, _ = self.pos_encoder_1(x)
+        #print(f"lstm: {x_lstm.shape}")
+        #x_lstm = self.pos_encoder_dropout_1(x)
+        #print(f"lstm drop: {x_lstm.shape}")
         if self.feature_extractor is not None:
             x_conv_unet = self.unet_1(x_conv_unet).squeeze(1).permute(2, 0, 1)
-            x_conv_unet = self.unet_dropout(x_conv_unet)
-            x = torch.cat([x_lstm, x_conv_unet], dim=2)
+            #print(f"unet out {x_conv_unet.shape}")
+            #x_conv_unet = self.unet_dropout(x_conv_unet)
+            #print(x_conv_unet.shape)
+            #x = torch.cat([x_lstm, x_conv_unet], dim=2)
+            x = x_lstm + x_conv_unet
+            #print(x.shape)
         x = self.layer_normal(x)
+        #print(x.shape)
         for conv, transformer_layer, layer_norm1, layer_norm2, deconv in zip(
             self.conv_layers,
             self.transformer_encoder,

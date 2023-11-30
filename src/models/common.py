@@ -131,7 +131,7 @@ def get_decoder(
     elif cfg.name == "SAKTModel":
         decoder = SAKTModel(nin=64, nout=n_classes, **cfg.params)
     elif cfg.name == "SAKTModelDr":
-        decoder = SAKTModelDr(nin=19, nout=n_classes, feature_extractor=kwargs['feature_extractor'], extra_channels=kwargs['extra_channels'], **cfg.params)
+        decoder = SAKTModelDr(nin=14, nout=n_classes, feature_extractor=kwargs['feature_extractor'], extra_channels=kwargs['extra_channels'], **cfg.params)
     elif cfg.name == "UNet1DDecoderLSTM":
         decoder = UNet1DDecoderLSTM(
             n_channels=n_channels,

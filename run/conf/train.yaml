@@ -57,7 +57,6 @@ labels:
 
 # feature
 features:
-  - "minute"
   - "anglez"
   - "enmo"
   - "hour_sin"

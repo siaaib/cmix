@@ -3,9 +3,8 @@ params:
   base_filters: 64
   wave_layers:
     - 12
-    - 10
-    - 4
-    - 2
+    - 8
+    - ${downsample_rate}
   wave_block: complete
   kernel_sizes: 
     - 3
